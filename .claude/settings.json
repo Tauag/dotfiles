@@ -1,5 +1,8 @@
 {
   "model": "opus",
+  "enabledPlugins": {
+    "eng@january-claude-code-plugins": true
+  },
   "permissions": {
     "allow": [
       "Bash(cat:*)",
@@ -31,11 +34,16 @@
       "Bash(wc:*)",
       "Bash(xargs:*)",
       "WebSearch",
+      "WebFetch",
       "mcp__claude_ai_Linear__get_issue"
     ],
     "deny": [],
-    "ask": ["WebFetch"]
+    "ask": []
   },
   "alwaysThinkingEnabled": true,
-  "fastMode": true
+  "fastMode": true,
+  "statusLine": {
+    "type": "command",
+    "command": "bash ~/.claude/statusline.sh"
+  }
 }
