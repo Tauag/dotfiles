@@ -1,0 +1,41 @@
+{
+  "model": "opus",
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)",
+      "Bash(docker:*)",
+      "Bash(echo:*)",
+      "Bash(find:*)",
+      "Bash(gh pr diff:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh repo view:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh workflow list:*)",
+      "Bash(git describe:*)",
+      "Bash(git fetch:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(lsof:*)",
+      "Bash(npm ls:*)",
+      "Bash(npm run:*)",
+      "Bash(rg:*)",
+      "Bash(ruff:*)",
+      "Bash(sed:*)",
+      "Bash(sort:*)",
+      "Bash(tree:*)",
+      "Bash(uv:*)",
+      "Bash(wc:*)",
+      "Bash(xargs:*)",
+      "WebSearch",
+      "mcp__claude_ai_Linear__get_issue"
+    ],
+    "deny": [],
+    "ask": ["WebFetch"]
+  },
+  "alwaysThinkingEnabled": true,
+  "fastMode": true
+}
