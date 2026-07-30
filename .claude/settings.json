@@ -51,6 +51,10 @@
           {
             "type": "command",
             "command": "osascript -e 'display notification \"Claude finished responding\" with title \"Claude Code\" sound name \"Glass\"'"
+          },
+          {
+            "type": "command",
+            "command": "jq -r \".session_id // empty\" | { read -r s; [ -n \"$s\" ] && mkdir -p ~/.claude/session-state && echo ready > ~/.claude/session-state/\"$s\"; } 2>/dev/null || true"
           }
         ]
       }
