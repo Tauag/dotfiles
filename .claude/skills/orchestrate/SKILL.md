@@ -25,7 +25,14 @@ Outward-facing actions never delegate: subagents draft, you review, and the main
 
 ## Keep in the main loop
 
-Design, interpreting ambiguous failures, decisions with tradeoffs, and final acceptance. A specialist can run a deep review pass, but the accept/reject decision is yours. If a subagent reports a blocker or a wrong premise, decide yourself rather than re-delegating blindly. For parallel specialists touching the same repo, isolate each with `isolation: "worktree"`.
+Design, interpreting ambiguous failures, decisions with tradeoffs, and final acceptance. A specialist can run a deep review pass, but the accept/reject decision is yours. If a subagent reports a blocker or a wrong premise, decide yourself rather than re-delegating blindly.
+
+## Code changes and PRs
+
+- If a task requires code changes, do the work in a git worktree — every subagent that modifies the repo gets `isolation: "worktree"`, including a single specialist working alone. The main checkout stays untouched.
+- Split delivered work into small PRs. When the pieces are logically sequenced, ship them as a Graphite stack (`gt create`, `gt submit --stack`).
+- Every PR in a stack must stand on its own: if only a prefix of the stack merges, the codebase is in a correct, working state — no dead references, no half-wired features, no broken builds. Sequence stacks so each layer is complete (e.g. schema → backend → frontend), gating anything user-visible until its dependencies exist.
+- When a change genuinely can't be split without creating a broken intermediate state, one large PR is the right call — size the PR to the smallest independently-correct unit, not to a line-count target.
 
 ## Mode lifecycle
 

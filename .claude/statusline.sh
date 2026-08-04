@@ -29,6 +29,13 @@ if [ -n "$session_id" ] && [ -f "$HOME/.claude/orchestrate-sessions/$session_id"
 else
 	orch='\033[90m⛭ Executor\033[0m'
 fi
+# fast mode badge (toggled with /fast)
+if [ "$(echo "$input" | jq -r '.fast_mode // false')" = "true" ]; then
+	fast='\033[32m⚡ Fast on\033[0m'
+else
+	fast='\033[90m⚡ Fast off\033[0m'
+fi
+
 used_tokens=$(echo "$input" | jq -r '.context_window.total_input_tokens // empty')
 max_tokens=$(echo "$input" | jq -r '.context_window.context_window_size // empty')
 
@@ -59,7 +66,7 @@ reset='\033[0m'
 sep=' \033[90m·\033[0m '
 
 if [ -n "$branch" ]; then
-	printf "${act}${sep}${orch}${sep}${color}%s %s${reset}${sep}\033[90m⎇ %s${reset}\n" "$model" "$ctx_bar" "$branch"
+	printf "${act}${sep}${orch}${sep}${fast}${sep}${color}%s %s${reset}${sep}\033[90m⎇ %s${reset}\n" "$model" "$ctx_bar" "$branch"
 else
-	printf "${act}${sep}${orch}${sep}${color}%s %s${reset}\n" "$model" "$ctx_bar"
+	printf "${act}${sep}${orch}${sep}${fast}${sep}${color}%s %s${reset}\n" "$model" "$ctx_bar"
 fi
