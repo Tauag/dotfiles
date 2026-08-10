@@ -44,6 +44,17 @@
     "command": "bash ~/.claude/statusline.sh"
   },
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/rm-to-trash.py 2>/dev/null || true"
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "matcher": "",
@@ -65,7 +76,27 @@
         "hooks": [
           {
             "type": "command",
-            "command": "osascript -e 'display notification \"Claude needs your input\" with title \"Claude Code\" sound name \"Purr\"'"
+            "command": "printf '\\a\\033]0;⏳ Claude needs input\\007' > /dev/tty; osascript -e 'display notification \"Claude needs your input\" with title \"Claude Code\" sound name \"Purr\"'"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r \".session_id // empty\" | { read -r s; [ -n \"$s\" ] && rm -f ~/.claude/session-crons/\"$s\"; find ~/.claude/session-crons -type f -mtime +7 -delete; } 2>/dev/null || true"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r \".session_id // empty\" | { read -r s; [ -n \"$s\" ] && rm -f ~/.claude/session-crons/\"$s\"; } 2>/dev/null || true"
           }
         ]
       }
