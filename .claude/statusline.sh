@@ -15,14 +15,6 @@ if [ -n "$branch" ] && [ "$(git -C "$dir" rev-parse --git-dir 2>/dev/null)" != "
 fi
 session_id=$(echo "$input" | jq -r '.session_id // empty')
 
-# activity indicator (state file written by UserPromptSubmit/PostToolUse/Notification/Stop hooks)
-state=$(cat "$HOME/.claude/session-state/$session_id" 2>/dev/null)
-case "$state" in
-	generating) act='\033[36mGenerating\033[0m' ;;   # can't take input
-	waiting)    act='\033[33mWaiting\033[0m' ;;      # blocked on your input (permission/question)
-	*)          act='\033[32mReady\033[0m' ;;        # ready to prompt
-esac
-
 # orchestration mode badge (marker file touched by the /orchestrate skill)
 if [ -n "$session_id" ] && [ -f "$HOME/.claude/orchestrate-sessions/$session_id" ]; then
 	orch='\033[35m⛭ Orchestrator\033[0m'
@@ -49,24 +41,41 @@ fmt_tokens() {
 }
 if [ -n "$used_tokens" ] && [ -n "$max_tokens" ] && [ "$max_tokens" -gt 0 ]; then
 	ctx_bar="$(fmt_tokens "$used_tokens")/$(fmt_tokens "$max_tokens")"
-	# yellow at 10%+, red at 30%+, gray otherwise
+	# green under 30%, yellow at 30%+, red at 50%+
 	pct=$(awk "BEGIN {printf \"%.1f\", $used_tokens * 100 / $max_tokens}")
-	level=$(echo "$pct" | awk '{print ($1 >= 30) ? 2 : (($1 >= 10) ? 1 : 0)}')
+	level=$(echo "$pct" | awk '{print ($1 >= 50) ? 2 : (($1 >= 30) ? 1 : 0)}')
 else
 	ctx_bar="…"
-	level=0
+	level=-1
 fi
 
 case "$level" in
 	2) color='\033[31m' ;;
 	1) color='\033[33m' ;;
-	*) color='\033[90m' ;;
+	0) color='\033[32m' ;;
+	*) color='\033[90m' ;;  # context size unknown
 esac
 reset='\033[0m'
 sep=' \033[90m·\033[0m '
 
-if [ -n "$branch" ]; then
-	printf "${act}${sep}${orch}${sep}${fast}${sep}${color}%s %s${reset}${sep}\033[90m⎇ %s${reset}\n" "$model" "$ctx_bar" "$branch"
+# pending scheduled jobs (Stop hook mirrors session_crons into this file) — CronCreate /
+# ScheduleWakeup / /loop only fire while this session stays open, so this is the
+# "leave the terminal running" signal. Absent when nothing is scheduled.
+jobs=$(cat "$HOME/.claude/session-crons/$session_id" 2>/dev/null)
+if [ -n "$jobs" ]; then
+	set -- $jobs
+	n=$1; shift; sched="$*"
+	[ "$n" = "1" ] && label='1 job' || label="$n jobs"
+	case "$sched" in
+		[0-9]*\ [0-9]*) label="$label @ $(echo "$sched" | awk '{printf "%d:%02d", $2, $1}')" ;;
+	esac
+	jobs_badge="${sep}\033[33m⏰ ${label}\033[0m"
 else
-	printf "${act}${sep}${orch}${sep}${fast}${sep}${color}%s %s${reset}\n" "$model" "$ctx_bar"
+	jobs_badge=''
+fi
+
+if [ -n "$branch" ]; then
+	printf "${orch}${jobs_badge}${sep}${fast}${sep}${color}%s %s${reset}${sep}\033[90m⎇ %s${reset}\n" "$model" "$ctx_bar" "$branch"
+else
+	printf "${orch}${jobs_badge}${sep}${fast}${sep}${color}%s %s${reset}\n" "$model" "$ctx_bar"
 fi
