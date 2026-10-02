@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Remove every linked git worktree in the current repo.
+# Usage: wt-clean [-n] [-v PATTERN]...
+#   -v PATTERN  keep worktrees whose path matches the extended regex (repeatable)
+#   -n          dry run: list what would be removed
+# Dirty worktrees are skipped (no --force). Branches are kept.
+set -euo pipefail
+
+keep=() dry=0
+while getopts "v:n" opt; do
+  case $opt in
+    v) keep+=("$OPTARG") ;;
+    n) dry=1 ;;
+    *) echo "usage: wt-clean [-n] [-v PATTERN]..." >&2; exit 2 ;;
+  esac
+done
+
+# First entry of `git worktree list` is the primary checkout; never touch it.
+git worktree list --porcelain | awk '/^worktree /{sub(/^worktree /,""); print}' | tail -n +2 | while IFS= read -r wt; do
+  skip=0
+  for p in ${keep[@]+"${keep[@]}"}; do
+    [[ $wt =~ $p ]] && skip=1
+  done
+  if ((skip)); then echo "keep:   $wt"; continue; fi
+  if ((dry)); then echo "remove: $wt"; continue; fi
+  echo "remove: $wt"
+  # Repo-specific stack teardown (january). Must run before the directory goes.
+  if make -C "$wt" -n kill-wt >/dev/null 2>&1; then make -C "$wt" kill-wt || true; fi
+  git worktree unlock "$wt" 2>/dev/null || true
+  git worktree remove "$wt" || echo "skipped (dirty?): $wt" >&2
+done
